@@ -1,0 +1,45 @@
+services:
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - ui
+      - master
+      - tenant
+
+  ui:
+    build:
+      context: ../infra-demo-ui
+    depends_on:
+      - master
+      - tenant
+  
+  tenant:
+    build:
+      context: ../infra-demo-tenant-level
+    # The port 4001 is just if you wish to test it with curl or something
+    ports:
+      - "4001:3000"
+    env_file:
+      - ../infra-demo-tenant-level/.env
+    environment:
+      - MASTER_BASE_URL=http://master:3000
+      - PORT=3000
+    depends_on:
+      - master
+
+  master:
+    build:
+      context: ../infra-demo-master-level
+    # The port 4000 is just if you wish to test it with curl or something
+    ports:
+      - "4000:3000"
+    env_file:
+      - ../infra-demo-master-level/.env
+    environment:
+      - TENANT_BASE_URL=http://tenant:3000
+      - PORT=3000
+  
