@@ -12,19 +12,19 @@ services:
 
   ui:
     build:
-      context: ../infra-demo-ui
+      context: ${UI_PATH}
     depends_on:
       - master
       - tenant
   
   tenant:
     build:
-      context: ../infra-demo-tenant-level
+      context: ${TENANT_PATH}
     # The port 4001 is just if you wish to test it with curl or something
     ports:
       - "4001:3000"
     env_file:
-      - ../infra-demo-tenant-level/.env
+      - ${TENANT_ENV_FILE}
     environment:
       - MASTER_BASE_URL=http://master:3000
       - PORT=3000
@@ -33,12 +33,12 @@ services:
 
   master:
     build:
-      context: ../infra-demo-master-level
+      context: ${MASTER_PATH}
     # The port 4000 is just if you wish to test it with curl or something
     ports:
       - "4000:3000"
     env_file:
-      - ../infra-demo-master-level/.env
+      - ${MASTER_ENV_FILE}
     environment:
       - TENANT_BASE_URL=http://tenant:3000
       - PORT=3000

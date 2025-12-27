@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Pulumi
+.pulumi/
+Pulumi.*.yaml  # Ignore environment-specific Pulumi configs
+Pulumi.yaml.bak
+
+# Helm
+charts/  # For downloaded dependencies, if you use them
+*.bak
+
+# Dependencies
+node_modules/  # If you have any Node.js components
+vendor/        # For Go dependencies
+
+# Environment files
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*~
