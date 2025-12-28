@@ -20,7 +20,7 @@ def create_k8s_cluster(vpc: awsx.ec2.Vpc, tags: Optional[dict] = None) -> eks.Cl
   # 2. Create an EKS Cluster
   # Note: At minimum a t3.medium for the node group, t2.micro wont do for EKS stuff + Argo + Apps
   cluster= eks.Cluster("platform-cluster",
-    version="1.34",                             # Pinned Kubernetes version
+    version="1.32",                             # Pinned Kubernetes version (check AWS EKS console for latest supported)
     storage_classes={
       "gp3": eks.StorageClassArgs(
         type="gp3",                             # Default storage class

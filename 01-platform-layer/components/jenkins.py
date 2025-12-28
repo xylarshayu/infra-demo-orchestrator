@@ -3,9 +3,29 @@ import pulumi_kubernetes as kubernetes
 import pulumi_kubernetes.helm.v4 as helm
 from typing import Optional
 
-def create_jenkins(namespace: str, k8s_provider: kubernetes.Provider, tags: Optional[dict] = None):
+def create_jenkins(
+    namespace: str, 
+    k8s_provider: kubernetes.Provider, 
+    tags: Optional[dict] = None,
+    admin_user: str = "admin",
+    admin_password: str = None,
+):
+  """
+  Deploy Jenkins as a Kubernetes service using Helm.
+  
+  Args:
+    namespace: Kubernetes namespace for Jenkins
+    k8s_provider: Pulumi Kubernetes provider
+    tags: AWS resource tags
+    admin_user: Jenkins admin username (default: admin)
+    admin_password: Jenkins admin password (default: admin123 if not set via config)
+  """
   if tags is None:
     tags = {}
+  
+  # Use provided password or default for demo purposes
+  # For production, set via: pulumi config set --secret jenkins_password <password>
+  jenkins_password = admin_password or "admin123"
 
   # Convert tags dict to AWS LB annotation string
   # Format: "Key1=Val1,Key2=Val2"
@@ -30,8 +50,8 @@ def create_jenkins(namespace: str, k8s_provider: kubernetes.Provider, tags: Opti
     namespace=namespace,
     values={
       "controller": {
-        "adminUser": "admin",
-        "adminPassword": "admin123",                  # Log-in with these
+        "adminUser": admin_user,
+        "adminPassword": jenkins_password,            # Set via pulumi config set --secret jenkins_password
         "serviceType": "LoadBalancer",                # So we can access Jenkins UI from the internet. Easy setup
         "service": {
           "annotations": {
@@ -71,34 +91,41 @@ def create_jenkins(namespace: str, k8s_provider: kubernetes.Provider, tags: Opti
       depends_on=[ns]
     )
   )
-  # 1. Find the Service object
+  # 1. Find the Jenkins Service object from the Helm chart resources
   # Note: .resources resolves to a list of Kubernetes resources rendered by the chart.
-  # Apply the pending chart created above (kube objects like deployment, service, pvc, secret, etc),
-  # which hasn't been initialized yet, once not pending.
-  jenkins_service = jenkins_chart.resources.apply(
-    lambda resources: next(
-      (r for r in (resources or []) if r.kind == "Service" and "jenkins" in r.metadata.name), # idk the exact metadata name
-      None
-    )
-  )
+  # Each resource is a Pulumi resource object. We identify the Service by checking:
+  # - The Pulumi type contains "Service" (more reliable than checking .kind which might be an Output)
+  # - The resource name contains "jenkins"
+  def find_jenkins_service(resources):
+    if not resources:
+      return None
+    for r in resources:
+      # Check the Pulumi resource type (e.g., "kubernetes:core/v1:Service")
+      resource_type = getattr(r, 'pulumi_type', '') or ''
+      is_service = 'Service' in resource_type and 'ServiceAccount' not in resource_type
+      
+      # Check the Pulumi resource name (set during chart rendering)
+      resource_name = getattr(r, 'pulumi_resource_name', '') or ''
+      is_jenkins = 'jenkins' in resource_name.lower()
+      
+      if is_service and is_jenkins:
+        return r
+    return None
+  
+  jenkins_service = jenkins_chart.resources.apply(find_jenkins_service)
 
-  # 2. Extract the Load Balancer URL from that service
-  # We use apply here again 'cause the LoadBalancer hostname is assigned by AWS asynchronously
+  # 2. Extract the Load Balancer URL from the Service's status
+  # The status.loadBalancer.ingress is populated by AWS after the NLB is provisioned
   def get_lb_hostname(service):
     if not service:
-      return "Service not found"
+      return "Service not found - check resources after deployment"
     
-    # Access the standard K8s status field
-    status = service.status
-
-    # We need to return an Output inside an apply, usually handled via another apply 
-    # or simplified access if the provider allows. 
-    # Note: In Python Pulumi, accessing nested Outputs often requires chaining.
-    return status.apply(
+    # service.status is an Output[ServiceStatus], so we need to apply
+    return service.status.apply(
       lambda s: (
         (s.load_balancer.ingress[0].hostname or s.load_balancer.ingress[0].ip)
         if s and s.load_balancer and s.load_balancer.ingress
-        else None
+        else "LoadBalancer pending - check AWS console"
       )
     )
 

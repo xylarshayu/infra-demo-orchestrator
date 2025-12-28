@@ -10,4 +10,5 @@ dependencies = [
     "pulumi-flux>=1.0.1",
     "pulumi-github>=6.10.0",
     "pulumi-tls>=5.2.3",
+    "setuptools>=80.9.0",
 ]
