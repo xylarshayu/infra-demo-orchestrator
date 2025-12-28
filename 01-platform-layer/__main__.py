@@ -11,6 +11,14 @@ config = pulumi.Config()
 gh_owner = config.require("github_owner")
 gh_repo = config.require("github_repo")
 gh_branch = config.require("github_branch")
+# GitHub token for creating deploy keys - set via: pulumi config set --secret github:token <token>
+# Or set GITHUB_TOKEN environment variable
+gh_config = pulumi.Config("github")
+gh_token = gh_config.get_secret("token")  # Optional - will use GITHUB_TOKEN env var if not set
+
+# Jenkins credentials - optional, defaults to admin/admin123 for demo purposes
+# Set via: pulumi config set --secret jenkins_password <password>
+jenkins_password = config.get_secret("jenkins_password")
 
 common_tags = {
   "Project": "infra-demo",
@@ -23,8 +31,8 @@ k8s_provider = kubernetes.Provider("k8s-provider",
   kubeconfig=cluster.kubeconfig,
   opts=pulumi.ResourceOptions(depends_on=[cluster])
 )
-jenkins = create_jenkins("jenkins", k8s_provider, tags=common_tags)
-flux = bootstrap_flux("main", k8s_provider, gh_owner, gh_repo, gh_branch)
+jenkins = create_jenkins("jenkins", k8s_provider, tags=common_tags, admin_password=jenkins_password)
+flux = bootstrap_flux("main", k8s_provider, cluster, gh_owner, gh_repo, gh_branch, gh_token)
 
 pulumi.export("vpc_id", vpc.vpc_id)
 pulumi.export("kubeconfig", cluster.kubeconfig)
