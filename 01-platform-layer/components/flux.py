@@ -2,8 +2,9 @@ import pulumi
 import pulumi_flux as flux
 import pulumi_github as github
 import pulumi_tls as tls
+import pulumi_kubernetes as kubernetes
 
-def bootstrap_flux(name: str, k8s_provider: pulumi.ProviderResource, github_owner: str, github_repo: str, github_branch: str):
+def bootstrap_flux(name: str, k8s_provider: kubernetes.Provider, github_owner: str, github_repo: str, github_branch: str):
   # 1. Create a Deploy Key for Flux to access the repo
   # We generate this in Pulumi so we can control the private key
   ssh_key = tls.PrivateKey(f"flux-{name}-key", 

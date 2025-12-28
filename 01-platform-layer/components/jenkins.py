@@ -3,7 +3,7 @@ import pulumi_kubernetes as kubernetes
 import pulumi_kubernetes.helm.v4 as helm
 from typing import Optional
 
-def create_jenkins(namespace: str, cluster: kubernetes.Provider, tags: Optional[dict] = None):
+def create_jenkins(namespace: str, k8s_provider: kubernetes.Provider, tags: Optional[dict] = None):
   if tags is None:
     tags = {}
 
@@ -17,7 +17,7 @@ def create_jenkins(namespace: str, cluster: kubernetes.Provider, tags: Optional[
       name=namespace,
       labels=tags
     ),
-    opts=pulumi.ResourceOptions(provider=cluster)
+    opts=pulumi.ResourceOptions(provider=k8s_provider)
   )
 
   # Install Jenkins using Helm v4
@@ -67,7 +67,7 @@ def create_jenkins(namespace: str, cluster: kubernetes.Provider, tags: Optional[
     },
     skip_crds=True,  # Skip CRDs as they're not needed for basic Jenkins. They let us define Jenkins as some custom resource type, helps for some special cases which may not be needed here
     opts=pulumi.ResourceOptions(
-      provider=cluster,
+      provider=k8s_provider,
       depends_on=[ns]
     )
   )
