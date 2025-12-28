@@ -1,0 +1,3 @@
+# How secret management works
+
+NOTE: IGNORE THIS DOC, NOT PROPERLY YET, IS PLACEHOLDER

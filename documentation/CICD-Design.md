@@ -1,0 +1,3 @@
+# How the CI/CD pipeline works
+
+NOTE: IGNORE THIS DOC, NOT PROPERLY YET, IS PLACEHOLDER

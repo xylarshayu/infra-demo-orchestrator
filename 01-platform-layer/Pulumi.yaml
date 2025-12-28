@@ -1,0 +1,10 @@
+name: 01-platform-layer
+description: Platform lifecycle layer of infrastructure project
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

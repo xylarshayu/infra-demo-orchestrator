@@ -1,0 +1,10 @@
+name: 03-envAddOn-layer
+description: Optional environment-scoped add-on layer of infrastructure project
+runtime:
+  name: python
+  options:
+    toolchain: uv
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python
